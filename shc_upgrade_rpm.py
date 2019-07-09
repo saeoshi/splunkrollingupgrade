@@ -64,14 +64,15 @@ if __name__ == '__main__':
     KVSTORE_STATUS_REST = "/services/kvstore/status?output_mode=json"
     TIMEOUT = 180
     TIMEOUT_INTERVAL = 5
-    SHC_UPGRADE_BASE_VERSION = "7.1.0"
+    SHC_UPGRADE_BASE_VERSION = "7.1.2"
 
     #config the logger
     logger.basicConfig(filename='shc_upgrade.log', level=logger.INFO)
 
     example_text = '''example:
 
-     python shc_upgrade_template.py -u https://example.com:8089 -d /home/user/splunk -t 180 -n /opt/newsplunk.tar.gz -r splunk -s 7.2.2 --auth admin:changed
+python shc_upgrade_rpm.py -u https://XXX.XXX.XXX.XXX:8089 -d /opt/splunk -t 180 -n /home/ec2-user/splunk-7.1.3-51d9cac7b837-linux-2.6-x86_64.rpm -r root -s 7.1.3 --auth adm
+in:XXXXXX
     '''
     parser = argparse.ArgumentParser(description='SHC upgrade script', epilog=example_text,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -115,7 +116,7 @@ if __name__ == '__main__':
     # check shc status
     captainInfo = {}
     peerDictOrig = {}
-    cluster_master_version = None
+    cluster_master_version = "7.1.2"
     try:
         captainInfo = rStatusJson['entry'][0]['content']['captain']
         if not captainInfo["dynamic_captain"]:
@@ -144,21 +145,6 @@ if __name__ == '__main__':
             raise ValueError("max_failures_to_keep_majority should be larger than 0 ."
                  "Run show shcluster-status to know which search head does not have the status Up."
                  "Please fix this before proceeding with rolling upgrade")
-
-        # version checking
-        if StrictVersion(argList.splunk_new_version) <= StrictVersion(SHC_UPGRADE_BASE_VERSION):
-            raise ValueError("the new splunk version number should be larger than %s" % (SHC_UPGRADE_BASE_VERSION))
-        cluster_master = rStatusJson['entry'][0]['content']['cluster_master']
-        if cluster_master:
-            for master in cluster_master:
-                version = cluster_master[master]['splunk_version']
-                if cluster_master_version is not None:
-                    if StrictVersion(version) < StrictVersion(cluster_master_version):
-                        cluster_master_version = version
-                else:
-                    cluster_master_version = version
-            if StrictVersion(cluster_master_version) < StrictVersion(argList.splunk_new_version):
-                raise ValueError("cluster_master version %s is lower than the new SHC version %s" % (cluster_master_version, argList.splunk_new_version))
 
         # gather the nodes that are needed to be upgraded
         peerDictOrig = rStatusJson['entry'][0]['content']['peers']
