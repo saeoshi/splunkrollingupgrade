@@ -1,5 +1,7 @@
 # splunkrollingupgrade
 
+## Searchhead Cluster Rolling Upgrade
+
 ## Prepare
 実行するノードから、rootでノンパスsshログインできるようにしておくこと
 
